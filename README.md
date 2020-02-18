@@ -1,5 +1,5 @@
 # httpd-openidc-debug
-Docker conntainer to debug apache (httpd) with mod_auth_opennidc
+Docker container to debug apache (httpd) with mod_auth_openidc
 
 ## How to provoke a segfault through reload (graceful restart)
 1. Run container
