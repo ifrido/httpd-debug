@@ -1,5 +1,10 @@
 FROM centos:latest
 
+ARG APRVER="1.7.0"
+ARG APRUTILVER="1.6.1"
+ARG HTTPDVER="2.4.43"
+ARG OPENIDCVER="2.4.2.1"
+
 # systemd integration (see https://hub.docker.com/_/centos)
 ENV container docker
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
@@ -43,7 +48,7 @@ RUN yum install -y \
 # install debuginfo
 RUN yum debuginfo-install -y \
         expat-2.2.5-3.el8.x86_64 \
-        glibc-2.28-72.el8.x86_64 \
+        glibc-2.28-72.el8_1.1.x86_64 \
         jansson-2.11-3.el8.x86_64 \
         keyutils-libs-1.5.10-6.el8.x86_64 \
         krb5-libs-1.17-9.el8.x86_64 \
@@ -57,7 +62,7 @@ RUN yum debuginfo-install -y \
         libselinux-2.9-2.1.el8.x86_64 \
         libuuid-2.32.1-17.el8.x86_64 \
         libxcrypt-4.1.1-4.el8.x86_64 \
-        openssl-libs-1.1.1c-2.el8.x86_64 \
+        openssl-libs-1.1.1c-2.el8_1.1.x86_64 \
         pcre-8.42-4.el8.x86_64 \
         pcre2-10.32-1.el8.x86_64 \
         systemd-libs-239-18.el8_1.1.x86_64 \
@@ -94,31 +99,31 @@ RUN yum install -y /usr/src/rpm/cjose-0.6.1-2.module_el8.0.0+13+fe691f1d.x86_64.
 
 # compile apr
 RUN mkdir -p /usr/src/apache
-RUN curl -L -o /usr/src/apache/apr-1.7.0.tar.bz2 \
-        https://downloads.apache.org/apr/apr-1.7.0.tar.bz2
-RUN tar -C /usr/src/apache -xjf /usr/src/apache/apr-1.7.0.tar.bz2
-RUN cd /usr/src/apache/apr-1.7.0 && \
+RUN curl -L -o /usr/src/apache/apr-${APRVER}.tar.bz2 \
+        https://downloads.apache.org/apr/apr-${APRVER}.tar.bz2
+RUN tar -C /usr/src/apache -xjf /usr/src/apache/apr-${APRVER}.tar.bz2
+RUN cd /usr/src/apache/apr-${APRVER} && \
         ./configure --prefix=/usr/local/apr && \
         make && \
         make install && \
         cd -
 
 # compile apr-util
-RUN curl -L -o /usr/src/apache/apr-util-1.6.1.tar.bz2 \
-        https://downloads.apache.org/apr/apr-util-1.6.1.tar.bz2
-RUN tar -C /usr/src/apache -xjf /usr/src/apache/apr-util-1.6.1.tar.bz2
-RUN cd /usr/src/apache/apr-util-1.6.1 && \
+RUN curl -L -o /usr/src/apache/apr-util-${APRUTILVER}.tar.bz2 \
+        https://downloads.apache.org/apr/apr-util-${APRUTILVER}.tar.bz2
+RUN tar -C /usr/src/apache -xjf /usr/src/apache/apr-util-${APRUTILVER}.tar.bz2
+RUN cd /usr/src/apache/apr-util-${APRUTILVER} && \
         ./configure --prefix=/usr/local/apr --with-apr=/usr/local/apr && \
         make && \
         make install && \
         cd -
 
 # compile httpd
-RUN curl -L -o /usr/src/apache/httpd-2.4.41.tar.bz2 \
-        https://downloads.apache.org//httpd/httpd-2.4.41.tar.bz2
-RUN tar -C /usr/src/apache -xjf /usr/src/apache/httpd-2.4.41.tar.bz2
-RUN cd /usr/src/apache/httpd-2.4.41 && \
-        ./configure --prefix=/opt/apache-2.4.41 \
+RUN curl -L -o /usr/src/apache/httpd-${HTTPDVER}.tar.bz2 \
+        http://mirror.easyname.ch/apache//httpd/httpd-${HTTPDVER}.tar.bz2
+RUN tar -C /usr/src/apache -xjf /usr/src/apache/httpd-${HTTPDVER}.tar.bz2
+RUN cd /usr/src/apache/httpd-${HTTPDVER} && \
+        ./configure --prefix=/opt/apache-${HTTPDVER} \
             --with-apr=/usr/local/apr/bin/apr-1-config \
             --with-apr-util=/usr/local/apr/bin/apu-1-config \
             --enable-mpms-shared=event \
@@ -130,15 +135,15 @@ RUN cd /usr/src/apache/httpd-2.4.41 && \
 
 # compile mod_auth_openidc
 RUN mkdir -p /usr/src/mod_auth_openidc
-RUN curl -L -o /usr/src/mod_auth_openidc/mod_auth_openidc-2.4.1.tar.gz \
-        https://github.com/zmartzone/mod_auth_openidc/releases/download/v2.4.1/mod_auth_openidc-2.4.1.tar.gz
-RUN tar -C /usr/src/mod_auth_openidc -xf /usr/src/mod_auth_openidc/mod_auth_openidc-2.4.1.tar.gz
+RUN curl -L -o /usr/src/mod_auth_openidc/mod_auth_openidc-${OPENIDCVER}.tar.gz \
+        https://github.com/zmartzone/mod_auth_openidc/releases/download/v2.4.2.1/mod_auth_openidc-2.4.2.1.tar.gz
+RUN tar -C /usr/src/mod_auth_openidc -xf /usr/src/mod_auth_openidc/mod_auth_openidc-${OPENIDCVER}.tar.gz
 ENV APR_LIBS=-L/usr/local/apr/lib
 ENV APR_CFLAGS=-I/usr/local/apr/include
-RUN sed -i '1 s/^.*$/\#\!\/usr\/bin\/perl -w/' /opt/apache-2.4.41/bin/apxs
-RUN cd /usr/src/mod_auth_openidc/mod_auth_openidc-2.4.1 && \
+RUN sed -i '1 s/^.*$/\#\!\/usr\/bin\/perl -w/' /opt/apache-${HTTPDVER}/bin/apxs
+RUN cd /usr/src/mod_auth_openidc/mod_auth_openidc-${OPENIDCVER} && \
         ./autogen.sh && \
-        ./configure CFLAGS="-g" --with-apxs2=/opt/apache-2.4.41/bin/apxs \
+        ./configure CFLAGS="-g" --with-apxs2=/opt/apache-${HTTPDVER}/bin/apxs \
             --with-apr=/usr/local/apr/bin/apr-1-config \
             --with-apr-util=/usr/local/apr/bin/apu-1-config && \
         make && \
@@ -150,7 +155,7 @@ RUN mkdir -p /tmp/coredump
 RUN chmod 0777 /tmp/coredump
 
 # copy the httpd.conf
-COPY httpd.conf /opt/apache-2.4.41/conf/httpd.conf
+COPY httpd.conf /opt/apache-${HTTPDVER}/conf/httpd.conf
 
 # set ulimit for apachectl
-RUN sed -i '1 a ulimit -c unlimited' /opt/apache-2.4.41/bin/apachectl
+RUN sed -i '1 a ulimit -c unlimited' /opt/apache-${HTTPDVER}/bin/apachectl
