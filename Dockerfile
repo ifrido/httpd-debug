@@ -41,7 +41,8 @@ RUN yum install -y \
         jansson-devel.x86_64 \
         libcurl-devel.x86_64 \
         libidn-devel.x86_64 \
-        uuid-devel \
+        uuid-devel.x86_64 \
+        libuuid-devel.x86_64 \
         autoconf \
         automake \
         gdb
