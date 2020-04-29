@@ -35,6 +35,7 @@ RUN yum install -y \
         zlib-devel.x86_64 \
         jansson-devel.x86_64 \
         libcurl-devel.x86_64 \
+        libidn-devel.x86_64 \
         autoconf \
         automake \
         gdb
